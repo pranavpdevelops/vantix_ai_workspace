@@ -13,11 +13,11 @@ const projectSchema = new mongoose.Schema(
       default: "",
     },
 
-    status: {
-      type: String,
-      enum: ["planning", "active", "completed"],
-      default: "planning",
-    },
+  status: {
+  type: String,
+  enum: ["Planning", "In Progress", "Completed"],
+  default: "Planning",
+},
 
     dueDate: {
       type: Date,

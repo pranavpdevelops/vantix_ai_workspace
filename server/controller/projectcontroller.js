@@ -1,4 +1,4 @@
-import Project from "../models/Project.js";
+import Project from "../model/Project.js";
 
 // Create project
 export const createProject = async (req, res) => {
@@ -24,6 +24,7 @@ export const createProject = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+    console.log("error",error)
   }
 };
 

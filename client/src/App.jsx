@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -11,6 +12,7 @@ import ProtectedRoute from "./components/protectedRoutes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dshboard";
+import Projects from "./pages/Project";
 
 function PlaceholderPage({ title }) {
   return (
@@ -27,7 +29,9 @@ function PlaceholderPage({ title }) {
 function HomeRedirect() {
   const { user, loading } = useAuth();
 
-  if (loading) return <p className="loading">Loading...</p>;
+  if (loading) {
+    return <p className="loading">Loading...</p>;
+  }
 
   return (
     <Navigate
@@ -42,15 +46,19 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={<Dashboard />}
+          />
 
           <Route
             path="/projects"
-            element={<PlaceholderPage title="Projects" />}
+            element={<Projects />}
           />
 
           <Route

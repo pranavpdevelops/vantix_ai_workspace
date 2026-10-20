@@ -4,6 +4,8 @@ import cors from "cors";
 import{ connectDB} from "./config/db.js";
 import authRoutes from "./routes/authroutes.js";
 import { get } from "mongoose";
+import router from "./routes/projectroutes.js";
+import taskroutes from "./routes/taskroutes.js"
 
 const app = express();
 app.use(
@@ -19,6 +21,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/projects",router);
+app.use("/api/tasks",taskroutes)
 
 const PORT = process.env.PORT || 5000;
 
