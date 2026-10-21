@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dshboard";
 import Projects from "./pages/Project";
+import Tasks from "./pages/Task";
 
 function PlaceholderPage({ title }) {
   return (
@@ -60,6 +61,7 @@ export default function App() {
             path="/projects"
             element={<Projects />}
           />
+          <Route path="/tasks" element={<Tasks />} />
 
           <Route
             path="/kanban"
