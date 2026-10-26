@@ -154,7 +154,7 @@ function Kanban() {
 
   return (
     <div className="space-y-7">
-      {/* Header */}
+    
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-sm font-medium text-violet-600">
@@ -179,14 +179,13 @@ function Kanban() {
         </button>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      {/* Summary */}
+   
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {columns.map((column) => {
           const count = tasks.filter(
@@ -220,7 +219,7 @@ function Kanban() {
         })}
       </div>
 
-      {/* Kanban columns */}
+      
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
         {columns.map((column) => {
           const Icon = column.icon;
@@ -234,7 +233,7 @@ function Kanban() {
               key={column.title}
               className="min-w-0 rounded-2xl border border-gray-200 bg-gray-50/80 p-4"
             >
-              {/* Column header */}
+           
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`rounded-lg p-2 ${column.bg} ${column.color}`}>
@@ -251,7 +250,7 @@ function Kanban() {
                 </span>
               </div>
 
-              {/* Task cards */}
+           
               <div className="space-y-3">
                 {columnTasks.map((task) => {
                   const editable = canUpdateTask(task);
@@ -279,7 +278,7 @@ function Kanban() {
                         {task.description || "No description provided."}
                       </p>
 
-                      {/* Project */}
+                     
                       <div className="mb-3 rounded-lg bg-gray-50 px-3 py-2">
                         <p className="text-xs text-gray-400">
                           Project
@@ -309,7 +308,7 @@ function Kanban() {
                         </div>
                       </div>
 
-                      {/* Due date */}
+                     
                       {task.dueDate && (
                         <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
                           <CalendarDays size={14} />
@@ -318,7 +317,7 @@ function Kanban() {
                         </div>
                       )}
 
-                      {/* Status update */}
+                   
                       {editable ? (
                         <div className="mt-4">
                           <label className="mb-1.5 block text-xs font-medium text-gray-500">

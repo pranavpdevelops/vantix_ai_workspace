@@ -425,13 +425,13 @@ export default function Dashboard() {
   const belongsToCurrentUser = (item) => {
     const owner = getOwner(item);
 
-    // Compare IDs when the API provides them.
+  
     const ownerId = getId(owner);
     if (currentUserId && ownerId && ownerId === currentUserId) {
       return true;
     }
 
-    // Also support APIs that return owner email/name rather than an ID.
+    
     const ownerEmail = getEmail(owner).toLowerCase();
     const ownerName = getName(owner).toLowerCase();
 
@@ -537,7 +537,7 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-8 pb-10">
-      {/* Welcome banner */}
+    
       <section className="relative isolate overflow-hidden rounded-[28px] bg-gradient-to-br from-violet-700 via-violet-600 to-indigo-700 px-6 py-8 text-white shadow-xl shadow-violet-200/50 sm:px-9 sm:py-10 lg:px-11">
         <div className="pointer-events-none absolute -right-12 -top-20 -z-10 h-64 w-64 rounded-full border-[40px] border-white/10" />
         <div className="pointer-events-none absolute -bottom-24 right-1/4 -z-10 h-52 w-52 rounded-full bg-indigo-400/20 blur-3xl" />
@@ -624,7 +624,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Statistics */}
+      
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;

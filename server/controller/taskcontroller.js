@@ -22,7 +22,6 @@ const populateTask = (query) =>
       },
     });
 
-// Create task
 export const createTask = async (req, res) => {
   try {
     const {
@@ -40,8 +39,7 @@ export const createTask = async (req, res) => {
       });
     }
 
-    // The project must exist, but it does not have to belong
-    // to the currently logged-in user.
+
     const project = await Project.findById(projectId);
 
     if (!project) {
@@ -74,7 +72,7 @@ export const createTask = async (req, res) => {
   }
 };
 
-// Get ALL tasks
+
 export const getTasks = async (req, res) => {
   try {
     const filter = {};
@@ -97,7 +95,7 @@ export const getTasks = async (req, res) => {
   }
 };
 
-// Update task
+
 export const updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -161,7 +159,7 @@ export const updateTask = async (req, res) => {
       task.project = project._id;
     }
 
-    // Do not accept owner from req.body.
+   
     await task.save();
 
     const updatedTask = await populateTask(

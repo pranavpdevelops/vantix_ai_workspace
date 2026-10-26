@@ -48,7 +48,7 @@ function Admin() {
     fetchData();
   }, []);
 
-  // Get owner name
+
   const getOwner = (item) => {
     const owner =
       item.owner ||
@@ -63,7 +63,7 @@ function Admin() {
     return "Unknown";
   };
 
-  // Delete user
+  
   const deleteUser = async (user) => {
     const confirmed = window.confirm(
       `Are you sure you want to delete user "${user.name || user.email}"?`
@@ -88,7 +88,6 @@ function Admin() {
     }
   };
 
-  // Delete project
   const deleteProject = async (project) => {
     const confirmed = window.confirm(
       `Delete project "${project.name || project.title}"?`
@@ -113,7 +112,7 @@ function Admin() {
     }
   };
 
-  // Delete task
+ 
   const deleteTask = async (task) => {
     const confirmed = window.confirm(
       `Delete task "${task.title}"?`
@@ -138,7 +137,7 @@ function Admin() {
     }
   };
 
-  // Dashboard statistics
+  
   const statCards = [
     {
       title: "Total Users",
@@ -160,14 +159,14 @@ function Admin() {
     },
   ];
 
-  // Tabs
+ 
   const tabs = [
     { id: "users", label: "Users", count: users.length },
     { id: "projects", label: "Projects", count: projects.length },
     { id: "tasks", label: "Tasks", count: tasks.length },
   ];
 
-  // Loading screen
+
   if (loading) {
     return (
       <div className="flex min-h-64 items-center justify-center">
@@ -181,7 +180,7 @@ function Admin() {
 
   return (
     <div className="space-y-7">
-      {/* Header */}
+
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-violet-600">
@@ -207,7 +206,7 @@ function Admin() {
         </button>
       </div>
 
-      {/* Error message */}
+      
       {error && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <AlertCircle size={19} className="mt-0.5 shrink-0" />
@@ -229,7 +228,7 @@ function Admin() {
         </div>
       )}
 
-      {/* Statistics */}
+      
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {statCards.map((card) => {
           const Icon = card.icon;
@@ -259,9 +258,9 @@ function Admin() {
         })}
       </div>
 
-      {/* Dashboard tables */}
+    
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        {/* Tabs */}
+        
         <div className="flex flex-wrap gap-2 border-b border-gray-100 p-4">
           {tabs.map((tab) => (
             <button
@@ -288,7 +287,7 @@ function Admin() {
           ))}
         </div>
 
-        {/* USERS TABLE */}
+        
         {activeTab === "users" && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[850px] text-left text-sm">
@@ -308,7 +307,7 @@ function Admin() {
                     key={item._id}
                     className="transition hover:bg-gray-50"
                   >
-                    {/* User */}
+                   
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 font-semibold text-violet-700">
@@ -323,12 +322,12 @@ function Admin() {
                       </div>
                     </td>
 
-                    {/* Email */}
+                   
                     <td className="px-5 py-4 text-gray-600">
                       {item.email}
                     </td>
 
-                    {/* Role */}
+                    
                     <td className="px-5 py-4">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -341,12 +340,11 @@ function Admin() {
                       </span>
                     </td>
 
-                    {/* Account ID */}
+                    
                     <td className="px-5 py-4 font-mono text-xs text-gray-500">
                       {item._id}
                     </td>
 
-                    {/* Delete user */}
                     <td className="px-5 py-4">
                       <button
                         onClick={() => deleteUser(item)}
@@ -374,7 +372,7 @@ function Admin() {
           </div>
         )}
 
-        {/* PROJECTS TABLE */}
+     
         {activeTab === "projects" && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-sm">
@@ -442,7 +440,7 @@ function Admin() {
           </div>
         )}
 
-        {/* TASKS TABLE */}
+      
         {activeTab === "tasks" && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-sm">

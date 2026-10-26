@@ -42,7 +42,7 @@ export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Prevent deleting the logged-in account
+   
     if (req.user._id.toString() === id) {
       return res.status(400).json({
         message: "You cannot delete your own account.",

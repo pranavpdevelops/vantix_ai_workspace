@@ -214,7 +214,7 @@ export default function Projects() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-7">
-      {/* Header */}
+      
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-sm font-semibold text-violet-600">
@@ -239,7 +239,6 @@ export default function Projects() {
         </button>
       </div>
 
-      {/* Error message */}
       {error && (
         <div className="flex items-start justify-between gap-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <p>{error}</p>
@@ -254,7 +253,6 @@ export default function Projects() {
         </div>
       )}
 
-      {/* Search and filter */}
       <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row">
         <div className="relative flex-1">
           <Search
@@ -293,7 +291,7 @@ export default function Projects() {
         </button>
       </div>
 
-      {/* Project count */}
+  
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">
           Showing{" "}
@@ -310,7 +308,7 @@ export default function Projects() {
         )}
       </div>
 
-      {/* Project cards */}
+  
       {loading ? (
         <div className="flex justify-center py-20">
           <RefreshCw
@@ -382,7 +380,7 @@ export default function Projects() {
                     "No description has been added."}
                 </p>
 
-                {/* Owner */}
+                
                 <div className="mt-5 flex items-center gap-3 border-t border-gray-100 pt-4">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 font-bold text-violet-700">
                     {owner.name.charAt(0).toUpperCase()}
@@ -406,7 +404,7 @@ export default function Projects() {
                   </div>
                 </div>
 
-                {/* Dates */}
+                
                 <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
                   <span className="flex items-center gap-1.5">
                     <CalendarDays size={14} />
@@ -425,7 +423,7 @@ export default function Projects() {
                   </span>
                 </div>
 
-                {/* Owner/admin actions */}
+               
                 {manageable && (
                   <div className="mt-5 flex gap-3 border-t border-gray-100 pt-4">
                     <button
@@ -451,7 +449,7 @@ export default function Projects() {
         </div>
       )}
 
-      {/* Create/Edit modal */}
+      
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/50 p-4 backdrop-blur-sm">
           <div className="my-auto w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8">

@@ -54,7 +54,7 @@ export const getProjects = async (req, res) => {
   }
 };
 
-// Update project
+
 export const updateProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);

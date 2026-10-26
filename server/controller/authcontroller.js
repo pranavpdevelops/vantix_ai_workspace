@@ -12,7 +12,6 @@ const createToken = (user) => {
   );
 };
 
-// Register
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -43,7 +42,7 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Public registration must never allow users to choose admin.
+   
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
@@ -72,7 +71,7 @@ export const register = async (req, res) => {
   }
 };
 
-// Login
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -125,7 +124,7 @@ export const login = async (req, res) => {
   }
 };
 
-// Get logged-in user
+
 export const getMe = async (req, res) => {
   return res.status(200).json({
     user: {
