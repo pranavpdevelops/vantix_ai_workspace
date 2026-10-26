@@ -38,7 +38,7 @@ export default function Login() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={handleSubmit}>
         <Link to="/" className="brand">
-          TaskForge <span>AI</span>
+          Vantix <span>AI</span>
         </Link>
 
         <p className="eyebrow">WELCOME BACK</p>
@@ -51,7 +51,7 @@ export default function Login() {
         <input
           type="email"
           name="email"
-          placeholder="you@example.com"
+          placeholder="Your Email"
           value={form.email}
           onChange={handleChange}
           required

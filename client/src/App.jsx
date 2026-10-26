@@ -14,6 +14,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dshboard";
 import Projects from "./pages/Project";
 import Tasks from "./pages/Task";
+import Kanban from "./pages/Kanban";
+import AI from "./pages/Ai";
 
 function PlaceholderPage({ title }) {
   return (
@@ -65,12 +67,12 @@ export default function App() {
 
           <Route
             path="/kanban"
-            element={<PlaceholderPage title="Kanban Board" />}
+            element={< Kanban/>}
           />
 
           <Route
             path="/ai"
-            element={<PlaceholderPage title="AI Assistant" />}
+            element={< AI/>}
           />
         </Route>
 

@@ -39,7 +39,7 @@ export default function Register() {
     <div className="auth-page">
       <form className="auth-card" onSubmit={handleSubmit}>
         <Link to="/" className="brand">
-          TaskForge <span>AI</span>
+          Vantix  <span>AI</span>
         </Link>
 
         <p className="eyebrow">GET STARTED</p>
