@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   LogOut,
   Menu,
-  X,
+  X,Users
 } from "lucide-react";
 
 import { useAuth } from "../context/authcontext";
@@ -22,6 +22,7 @@ const links = [
   { name: "Tasks", path: "/tasks", icon: CheckSquare },
   { name: "Kanban", path: "/kanban", icon: Columns3 },
   { name: "AI Assistant", path: "/ai", icon: Bot },
+  { name: "Community", path: "/community", icon: Users },
 ];
 
 export default function SideBar() {

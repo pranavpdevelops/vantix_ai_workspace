@@ -180,7 +180,7 @@ export default function Register() {
                   id="email"
                   type="email"
                   name="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter Your Email"
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"

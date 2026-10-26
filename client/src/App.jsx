@@ -20,6 +20,7 @@ import Tasks from "./pages/Task";
 import Kanban from "./pages/Kanban";
 import Ai from "./pages/Ai";
 import Admin from "./pages/Admin";
+import Community from "./pages/Community";
 
 
 function MainLayout() {
@@ -93,6 +94,8 @@ function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
 
+          <Route path="/community" element={<Community />} />
+
           <Route path="/projects" element={<Projects />} />
 
           <Route path="/tasks" element={<Tasks />} />
@@ -100,7 +103,7 @@ function AppRoutes() {
           <Route path="/kanban" element={<Kanban />} />
 
           <Route path="/ai" element={<Ai />} />
-
+           
           <Route path="/admin" element={<AdminRoute />} />
         </Route>
       </Route>

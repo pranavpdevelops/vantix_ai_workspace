@@ -21,7 +21,7 @@ function Admin() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("users");
 
-  // Fetch dashboard data
+  
   const fetchData = async () => {
     setLoading(true);
     setError("");
