@@ -1,70 +1,78 @@
+import User from "../model/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../model/User.js";
 
-// REGISTER
+const createToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id.toString(),
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+};
+
+// Register
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
-        message: "All fields are required",
+        message: "Name, email and password are required",
       });
     }
 
     if (password.length < 6) {
       return res.status(400).json({
-        message: "Password must be at least 6 characters",
+        message: "Password must contain at least 6 characters",
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const existingUser = await User.findOne({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
     });
 
     if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists",
+      return res.status(409).json({
+        message: "Email already registered",
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save user in MongoDB Atlas
+    // Public registration must never allow users to choose admin.
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password: hashedPassword,
+      role: "user",
     });
 
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = createToken(user);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Registration successful",
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
     console.error("Register error:", error);
 
-    res.status(500).json({
-      message: "Server error during registration",
+    return res.status(500).json({
+      message: "Registration failed",
     });
   }
 };
 
-// LOGIN
+// Login
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -75,7 +83,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Find user
     const user = await User.findOne({
       email: email.trim().toLowerCase(),
     });
@@ -86,62 +93,46 @@ export const login = async (req, res) => {
       });
     }
 
-    // Compare password with hashed password
-    const isMatch = await bcrypt.compare(
+    const passwordMatches = await bcrypt.compare(
       password,
       user.password
     );
 
-    if (!isMatch) {
+    if (!passwordMatches) {
       return res.status(401).json({
         message: "Invalid email or password",
       });
     }
 
-    // Generate JWT
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = createToken(user);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (error) {
     console.error("Login error:", error);
 
-    res.status(500).json({
-      message: "Server error during login",
+    return res.status(500).json({
+      message: "Login failed",
     });
   }
 };
 
-// GET CURRENT USER
+// Get logged-in user
 export const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select(
-      "-password"
-    );
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    res.status(200).json({ user });
-  } catch (error) {
-    console.error("Get user error:", error);
-
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
+  return res.status(200).json({
+    user: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    },
+  });
 };

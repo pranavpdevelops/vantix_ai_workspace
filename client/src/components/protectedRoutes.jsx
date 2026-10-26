@@ -5,8 +5,12 @@ export default function ProtectedRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <p className="loading">Loading workspace...</p>;
+    return <p className="p-6">Loading...</p>;
   }
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 }

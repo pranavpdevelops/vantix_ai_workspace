@@ -1,220 +1,186 @@
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+
 import {
   LayoutDashboard,
   FolderKanban,
-  ListTodo,
+  CheckSquare,
   Columns3,
   Bot,
+  ShieldCheck,
   LogOut,
-  Sparkles,
   Menu,
   X,
-  ArrowUpRight,
 } from "lucide-react";
+
 import { useAuth } from "../context/authcontext";
 
-const navItems = [
-  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { label: "Projects", path: "/projects", icon: FolderKanban },
-  { label: "Tasks", path: "/tasks", icon: ListTodo },
-  { label: "Kanban Board", path: "/kanban", icon: Columns3 },
-  { label: "AI Assistant", path: "/ai", icon: Bot },
+const links = [
+  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Projects", path: "/projects", icon: FolderKanban },
+  { name: "Tasks", path: "/tasks", icon: CheckSquare },
+  { name: "Kanban", path: "/kanban", icon: Columns3 },
+  { name: "AI Assistant", path: "/ai", icon: Bot },
 ];
 
-function SideBar() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
+export default function SideBar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const closeMenu = () => {
-    setSidebarOpen(false);
-  };
+  
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
-  const handleLogout = async () => {
-     const confirmed = window.confirm(
-      "Are you sure you want to LogOut?"
+  
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    const confirmed = window.confirm(
+      "LogOut"
     );
-
     if (!confirmed) return;
-    closeMenu();
-
-    try {
-      await logout();
-    } finally {
-      navigate("/login", { replace: true });
-    }
+    setMenuOpen(false);
+    logout();
+    navigate("/login");
   };
+
+  const linkClass = ({ isActive }) =>
+    `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
+      isActive
+        ? "bg-violet-600 text-white shadow-lg shadow-violet-200"
+        : "text-gray-600 hover:bg-violet-50 hover:text-violet-700"
+    }`;
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3 md:hidden">
-        <Link
-          to="/dashboard"
-          onClick={closeMenu}
-          className="flex items-center gap-2"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
-            <Sparkles size={20} />
-          </span>
+     
+      <button
+        type="button"
+        onClick={() => setMenuOpen((previous) => !previous)}
+        aria-label={menuOpen ? "Close menu" : "Open menu"}
+        aria-expanded={menuOpen}
+        className="fixed left-4 top-4 z-[110] flex h-11 w-11 items-center justify-center rounded-xl border border-violet-100 bg-white text-violet-700 shadow-md transition hover:bg-violet-50 min-[761px]:hidden"
+      >
+        {menuOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
 
-          <span className="text-lg font-bold text-[#17172B]">
-            VANTIX <span className="text-violet-600">AI</span>
-          </span>
-        </Link>
-
+     
+      {menuOpen && (
         <button
           type="button"
-          onClick={() => setSidebarOpen((open) => !open)}
-          className="rounded-xl border border-gray-200 p-2 text-gray-700 transition hover:bg-gray-50"
-          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-          aria-expanded={sidebarOpen}
-        >
-          {sidebarOpen ? <X size={21} /> : <Menu size={21} />}
-        </button>
-      </header>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          onClick={closeMenu}
-          aria-label="Close navigation overlay"
+          onClick={() => setMenuOpen(false)}
+          aria-label="Close sidebar"
+          className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px] min-[761px]:hidden"
         />
       )}
 
-      {/* Sidebar */}
+     
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-72 max-w-[85vw] flex-col border-r border-gray-100 bg-white p-5 shadow-xl transition-transform duration-300 md:sticky md:top-0 md:z-20 md:h-screen md:w-64 md:max-w-none md:translate-x-0 md:shadow-none ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed left-0 top-0 z-[100] flex h-dvh w-[255px] max-w-[85vw] flex-col overflow-y-auto border-r border-violet-100 bg-white p-5 shadow-xl transition-transform duration-300 ease-in-out min-[761px]:translate-x-0 min-[761px]:shadow-none ${
+          menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Logo */}
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            to="/dashboard"
-            onClick={closeMenu}
-            className="flex items-center gap-3"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white">
-              <Sparkles size={21} />
-            </span>
-
-            <span className="text-xl font-bold text-[#17172B]">
-              Vantix<span className="text-violet-600">AI</span>
-            </span>
-          </Link>
+      
+        <div className="mb-10 flex items-center justify-between">
+          <h1 className="text-2xl font-extrabold tracking-tight text-violet-700">
+            Vantix <span className="text-gray-800">AI</span>
+          </h1>
 
           <button
             type="button"
-            onClick={closeMenu}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 md:hidden"
-            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close sidebar"
+            className="rounded-lg p-2 text-gray-500 transition hover:bg-violet-50 hover:text-violet-700 min-[761px]:hidden"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Navigation Heading */}
-        <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
+      
+        <p className="mb-3 px-3 text-xs font-bold uppercase tracking-[0.15em] text-gray-400">
           Workspace
         </p>
 
-        {/* Navigation Links */}
-        <nav
-          className="flex flex-1 flex-col gap-2 overflow-y-auto"
-          aria-label="Main navigation"
-        >
-          {navItems.map((item) => {
-            const Icon = item.icon;
-
-            const active =
-              location.pathname === item.path ||
-              (item.path !== "/dashboard" &&
-                location.pathname.startsWith(`${item.path}/`));
+        
+        <nav className="flex-1 space-y-2">
+          {links.map((link) => {
+            const Icon = link.icon;
 
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={closeMenu}
-                aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
-                  active
-                    ? "bg-violet-50 text-violet-700"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                }`}
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={linkClass}
               >
                 <Icon size={19} />
-
-                <span>{item.label}</span>
-
-                {active && (
-                  <span className="ml-auto h-2 w-2 rounded-full bg-violet-600" />
-                )}
-              </Link>
+                <span>{link.name}</span>
+              </NavLink>
             );
           })}
+
+          
+          {user?.role === "admin" && (
+            <NavLink to="/admin" className={linkClass}>
+              <ShieldCheck size={19} />
+              <span>Admin</span>
+            </NavLink>
+          )}
         </nav>
 
-        {/* AI Assistant Card */}
-        <div className="mt-6 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 p-4 text-white">
-          <Sparkles size={22} />
+        {/* User profile */}
+        <div className="mt-6 border-t border-gray-100 pt-5">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 font-bold text-violet-700">
+              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            </div>
 
-          <h3 className="mt-3 font-semibold">
-            Meet your AI assistant
-          </h3>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-gray-800">
+                {user?.name.toUpperCase() || "User"}
+              </p>
 
-          <p className="mt-1 text-xs leading-5 text-white/80">
-            Get help planning and organizing your work.
-          </p>
+              <p className="text-xs capitalize text-gray-500">
+                {user?.email || "Member"}
+              </p>
+            </div>
+          </div>
 
-          <Link
-            to="/ai"
-            onClick={closeMenu}
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold hover:text-violet-100"
+          
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition hover:bg-red-50"
           >
-            Try AI Assistant
-            <ArrowUpRight size={16} />
-          </Link>
+            <LogOut size={19} />
+            <span>Logout</span>
+          </button>
         </div>
-
-        {/* User Profile */}
-        <div className="mt-5 flex items-center gap-3 rounded-xl bg-gray-50 p-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 font-bold text-violet-700">
-            {(user?.name || user?.email || "U")
-              .charAt(0)
-              .toUpperCase()}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-gray-800">
-              {user?.name || "User"}
-            </p>
-
-            <p className="truncate text-xs text-gray-500">
-              {user?.email || "Workspace member"}
-            </p>
-          </div>
-        </div>
-
-        {/* Logout */}
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-3 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-gray-500 transition hover:bg-rose-50 hover:text-rose-600"
-        >
-          <LogOut size={19} />
-          Logout
-        </button>
       </aside>
     </>
   );
 }
-
-export default SideBar;

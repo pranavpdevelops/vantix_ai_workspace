@@ -5,15 +5,14 @@ import {
   updateProject,
   deleteProject,
 } from "../controller/projectcontroller.js";
-
-import authMiddleware from "../middleware/auth.js";
+import { protect } from "../middleware/authmiddleware.js";
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(protect);
 
-router.post("/", createProject);
 router.get("/", getProjects);
+router.post("/", createProject);
 router.put("/:id", updateProject);
 router.delete("/:id", deleteProject);
 

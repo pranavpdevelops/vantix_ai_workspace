@@ -1,320 +1,340 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Bot,
   Send,
   Sparkles,
   User,
+  Trash2,
   LoaderCircle,
+  Lightbulb,
 } from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/authcontext";
 
 const suggestions = [
-  "Create a plan for a project management application",
-  "Break an e-commerce project into tasks",
-  "Suggest a weekly development schedule",
-  "Write a task description for user authentication",
+  "How can I manage my project efficiently?",
+  "Create a task breakdown for a website project.",
+  "Give me tips to improve team productivity.",
+  "How do I prioritize my tasks?",
 ];
 
-function AI() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
+function Ai() {
+  const { user } = useAuth();
+
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: `Hi ${user?.name || "there"}! 👋 I'm Vantix AI. How can I help you manage your projects and tasks today?`,
+    },
+  ]);
+
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [failedMessage, setFailedMessage] = useState("");
 
-  const sendMessage = async (text = message) => {
-    const userMessage = text.trim();
+  const bottomRef = useRef(null);
 
-    if (!userMessage || loading) return;
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, loading]);
 
+  const sendMessage = async (text = input) => {
+    const question = text.trim();
 
-    const isRetry = userMessage === failedMessage;
+    if (!question || loading) return;
 
-    let updatedMessages;
+    const updatedMessages = [
+      ...messages,
+      {
+        role: "user",
+        content: question,
+      },
+    ];
 
-    if (isRetry) {
-      updatedMessages = messages;
-    } else {
-      updatedMessages = [
-        ...messages,
-        { role: "user", content: userMessage },
-      ];
-
-      setMessages(updatedMessages);
-    }
-
-    setMessage("");
+    setMessages(updatedMessages);
+    setInput("");
     setLoading(true);
     setError("");
 
     try {
-      const history = updatedMessages
-        .slice(-10)
-        .map(({ role, content }) => ({ role, content }));
-
-      const res = await api.post("/ai/chat", {
-        message: userMessage,
-        history,
+      const response = await api.post("/ai/chat", {
+        message: question,
+        messages: updatedMessages.map((item) => ({
+          role: item.role,
+          content: item.content,
+        })),
       });
 
-      const reply = res.data.reply;
+      const data = response.data;
 
-      if (!reply) {
-        throw new Error("No response received from the AI assistant.");
+      // Support common response formats.
+      const answer =
+        data.reply ||
+        data.response ||
+        data.message ||
+        data.answer ||
+        data.content ||
+        data.choices?.[0]?.message?.content;
+
+      if (!answer || typeof answer !== "string") {
+        throw new Error(
+          "The AI server returned no answer. Check your backend response format."
+        );
       }
 
-      setMessages([
-        ...updatedMessages,
+      setMessages((previous) => [
+        ...previous,
         {
           role: "assistant",
-          content: reply,
+          content: answer,
         },
       ]);
-
-      setFailedMessage("");
     } catch (err) {
       console.error("AI request failed:", err);
 
-      const status = err.response?.status;
-      const backendMessage = err.response?.data?.message;
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Something went wrong.";
 
-      if (status === 503) {
-        setError(
-          "The AI service is temporarily busy. Please wait a moment and retry."
-        );
-      } else if (status === 429) {
-        setError(
-          backendMessage ||
-            "The AI usage limit may have been reached. Please try again later."
-        );
-      } else {
-        setError(
-          backendMessage ||
-            err.message ||
-            "Could not connect to the AI assistant. Please try again."
-        );
-      }
-
-      setFailedMessage(userMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
     sendMessage();
   };
 
-  const handleRetry = () => {
-    if (failedMessage) {
-      sendMessage(failedMessage);
-    }
+  const clearChat = () => {
+    if (loading) return;
+
+    setMessages([
+      {
+        role: "assistant",
+        content: `Hi ${user?.name || "there"}! 👋 I'm Vantix AI. What would you like help with?`,
+      },
+    ]);
+
+    setError("");
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F8FC] px-4 py-6 text-[#17172B] sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-5xl flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#6D5DFB] text-white shadow-lg shadow-[#6D5DFB]/20">
-            <Sparkles size={27} />
+    <div className="mx-auto max-w-6xl space-y-6">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-violet-600">
+            <Sparkles size={16} />
+            Your AI workspace assistant
           </div>
 
-          <div>
-            <p className="text-sm font-semibold text-[#6D5DFB]">
-              Vantix AI
-            </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+            Vantix AI Assistant
+          </h1>
 
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-              AI Assistant
-            </h1>
-
-            <p className="mt-1 text-sm text-[#77788D]">
-              Plan smarter. Organize better. Get things done.
-            </p>
-          </div>
+          <p className="mt-2 text-sm text-gray-500">
+            Get help planning projects, organizing tasks, and improving productivity.
+          </p>
         </div>
 
-        {/* Chat Container */}
-        <div className="mt-8 flex min-h-[480px] flex-col rounded-3xl border border-[#E9EAF2] bg-white shadow-sm">
-          {/* Chat Header */}
-          <div className="flex items-center gap-3 border-b border-[#F0F0F6] px-5 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F0EEFF] text-[#6D5DFB]">
-              <Bot size={22} />
+        <button
+          onClick={clearChat}
+          disabled={loading}
+          className="flex items-center justify-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Trash2 size={16} />
+          Clear chat
+        </button>
+      </div>
+
+      {/* AI status */}
+      <div className="flex items-center gap-4 rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-50 to-white p-5">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-200">
+          <Bot size={25} />
+        </div>
+
+        <div className="flex-1">
+          <h2 className="font-semibold text-gray-900">
+            Your project management copilot
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Ask questions about planning, tasks, priorities, and teamwork.
+          </p>
+        </div>
+
+        <span className="hidden items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-600 ring-1 ring-gray-200 sm:flex">
+          <span className="h-2 w-2 rounded-full bg-green-500" />
+          Assistant
+        </span>
+      </div>
+
+      {/* Chat window */}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+              <Sparkles size={20} />
             </div>
 
             <div>
-              <h2 className="text-sm font-bold">
-                VanTix Assistant
+              <h2 className="text-sm font-semibold text-gray-900">
+                Vantix Assistant
               </h2>
 
-              <p className="mt-1 text-xs text-[#77788D]">
-                Your project planning companion
+              <p className="text-xs text-gray-500">
+                Project planning and productivity
               </p>
             </div>
-
-            <span className="ml-auto rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-600">
-              AI Assistant
-            </span>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 space-y-5 p-4 sm:p-6">
-            {messages.length === 0 && (
-              <div className="py-8 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F0EEFF] text-[#6D5DFB]">
-                  <Bot size={32} />
-                </div>
+          <span className="text-xs text-gray-400">
+            {messages.filter((item) => item.role === "user").length} messages
+          </span>
+        </div>
 
-                <h3 className="mt-5 text-xl font-bold">
-                  How can I help you?
-                </h3>
+        {/* Messages */}
+        <div className="h-[420px] space-y-5 overflow-y-auto bg-gray-50/50 p-4 sm:p-6">
+          {messages.map((message, index) => {
+            const isUser = message.role === "user";
 
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#77788D]">
-                  Ask me to plan a project, break down tasks, or improve
-                  your team's workflow.
-                </p>
-
-                <div className="mx-auto mt-6 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
-                  {suggestions.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() => sendMessage(suggestion)}
-                      disabled={loading}
-                      className="rounded-xl border border-[#E9EAF2] p-4 text-left text-sm leading-5 transition hover:border-[#6D5DFB] hover:bg-[#F8F7FF] disabled:opacity-50"
-                    >
-                      <Sparkles
-                        size={17}
-                        className="mb-2 text-[#6D5DFB]"
-                      />
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {messages.map((item, index) => (
+            return (
               <div
-                key={`${index}-${item.role}`}
-                className={`flex gap-3 ${
-                  item.role === "user"
-                    ? "justify-end"
-                    : "justify-start"
+                key={index}
+                className={`flex items-start gap-3 ${
+                  isUser ? "flex-row-reverse" : ""
                 }`}
               >
-                {item.role === "assistant" && (
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F0EEFF] text-[#6D5DFB]">
-                    <Bot size={19} />
-                  </div>
-                )}
-
                 <div
-                  className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-7 sm:max-w-[75%] ${
-                    item.role === "user"
-                      ? "rounded-tr-sm bg-[#6D5DFB] text-white"
-                      : "rounded-tl-sm bg-[#F7F8FC] text-[#33334B]"
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                    isUser
+                      ? "bg-gray-200 text-gray-700"
+                      : "bg-violet-600 text-white"
                   }`}
                 >
-                  {item.content}
+                  {isUser ? <User size={18} /> : <Bot size={19} />}
                 </div>
 
-                {item.role === "user" && (
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#E9EAF2] text-[#77788D]">
-                    <User size={19} />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {loading && (
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0EEFF] text-[#6D5DFB]">
-                  <Bot size={19} />
-                </div>
-
-                <div className="flex items-center gap-2 rounded-2xl bg-[#F7F8FC] px-4 py-3 text-sm text-[#77788D]">
-                  <LoaderCircle
-                    size={17}
-                    className="animate-spin"
-                  />
-                  Thinking...
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600"
-              >
-                <p>{error}</p>
-
-                <button
-                  type="button"
-                  onClick={handleRetry}
-                  disabled={loading || !failedMessage}
-                  className="mt-2 font-semibold underline disabled:opacity-50"
+                <div
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 sm:max-w-[75%] ${
+                    isUser
+                      ? "rounded-tr-sm bg-violet-600 text-white"
+                      : "rounded-tl-sm border border-gray-100 bg-white text-gray-700 shadow-sm"
+                  }`}
                 >
-                  Try again
-                </button>
+                  <p className="whitespace-pre-wrap break-words">
+                    {message.content}
+                  </p>
+                </div>
               </div>
-            )}
+            );
+          })}
+
+          {loading && (
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
+                <Bot size={19} />
+              </div>
+
+              <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-gray-100 bg-white px-4 py-3 text-sm text-gray-500 shadow-sm">
+                <LoaderCircle
+                  size={17}
+                  className="animate-spin text-violet-600"
+                />
+                Vantix AI is thinking...
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 sm:mx-6">
+            <p className="font-medium">Unable to get an AI response</p>
+            <p className="mt-1 break-words">{error}</p>
+            <p className="mt-1 text-xs">
+              Check the backend server, AI API configuration, and available API credits.
+            </p>
+          </div>
+        )}
+
+        {/* Suggested prompts */}
+        <div className="border-t border-gray-100 px-4 py-4 sm:px-6">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-gray-500">
+            <Lightbulb size={15} className="text-amber-500" />
+            TRY ASKING
           </div>
 
-          {/* Message Input */}
-          <form
-            onSubmit={handleSubmit}
-            className="border-t border-[#F0F0F6] p-4 sm:p-5"
-          >
-            <div className="flex items-end gap-3 rounded-2xl border border-[#E9EAF2] bg-[#FCFCFE] p-2 focus-within:border-[#6D5DFB] focus-within:ring-4 focus-within:ring-[#6D5DFB]/10">
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === "Enter" &&
-                    !e.shiftKey
-                  ) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-                placeholder="Ask anything about your project..."
-                rows={1}
-                disabled={loading}
-                className="max-h-32 min-h-11 flex-1 resize-y bg-transparent px-3 py-3 text-sm outline-none placeholder:text-[#A0A1B3] disabled:opacity-50"
-              />
-
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((suggestion) => (
               <button
-                type="submit"
-                disabled={!message.trim() || loading}
-                aria-label="Send message"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#6D5DFB] text-white transition hover:bg-[#5948E8] disabled:cursor-not-allowed disabled:opacity-50"
+                key={suggestion}
+                type="button"
+                disabled={loading}
+                onClick={() => sendMessage(suggestion)}
+                className="rounded-full border border-gray-200 bg-white px-3 py-2 text-left text-xs text-gray-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? (
-                  <LoaderCircle
-                    size={20}
-                    className="animate-spin"
-                  />
-                ) : (
-                  <Send size={19} />
-                )}
+                {suggestion}
               </button>
-            </div>
-
-            <p className="mt-3 text-center text-xs text-[#9999AA]">
-              AI-generated suggestions may occasionally be inaccurate.
-            </p>
-          </form>
+            ))}
+          </div>
         </div>
+
+        {/* Message input */}
+        <form
+          onSubmit={handleSubmit}
+          className="border-t border-gray-100 bg-white p-4 sm:p-5"
+        >
+          <div className="flex items-end gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-2 transition focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-50">
+            <textarea
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  handleSubmit(event);
+                }
+              }}
+              placeholder="Ask Vantix AI anything..."
+              rows={1}
+              disabled={loading}
+              className="max-h-32 min-h-11 flex-1 resize-y bg-transparent px-3 py-3 text-sm text-gray-800 outline-none placeholder:text-gray-400 disabled:opacity-50"
+            />
+
+            <button
+              type="submit"
+              disabled={!input.trim() || loading}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Send message"
+            >
+              {loading ? (
+                <LoaderCircle size={19} className="animate-spin" />
+              ) : (
+                <Send size={19} />
+              )}
+            </button>
+          </div>
+
+          <p className="mt-2 text-center text-xs text-gray-400">
+            AI responses may be inaccurate. Review important information before acting on it.
+          </p>
+        </form>
       </div>
     </div>
   );
 }
 
-
-export default AI;
+export default Ai;

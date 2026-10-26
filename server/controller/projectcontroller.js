@@ -1,62 +1,66 @@
 import Project from "../model/Project.js";
 
+const isAdmin = (user) => user.role === "admin";
+
+const canManage = (project, user) => {
+  return (
+    isAdmin(user) ||
+    project.owner.toString() === user._id.toString()
+  );
+};
+
 // Create project
 export const createProject = async (req, res) => {
   try {
     const { name, description, status } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!name?.trim()) {
       return res.status(400).json({
         message: "Project name is required",
       });
     }
 
     const project = await Project.create({
-      name,
-      description,
+      name: name.trim(),
+      description: description || "",
       status,
-      owner: req.user.id,
+      owner: req.user._id,
     });
 
-    res.status(201).json({
-      message: "Project created successfully",
-      project,
-    });
+    const populatedProject = await Project.findById(project._id)
+      .populate("owner", "name email");
+
+    return res.status(201).json(populatedProject);
   } catch (error) {
-    res.status(500).json({ message: error.message });
-    console.log("error",error)
+    console.error("Create project error:", error);
+
+    return res.status(400).json({
+      message: error.message,
+    });
   }
 };
 
-// Get all projects belonging to logged-in user
+// Get ALL projects
 export const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find({
-      owner: req.user.id,
-    }).sort({ createdAt: -1 });
+    const projects = await Project.find()
+      .populate("owner", "name email")
+      .sort({ createdAt: -1 });
 
-    res.status(200).json(projects);
+    return res.status(200).json(projects);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Get projects error:", error);
+
+    return res.status(500).json({
+      message: "Failed to retrieve projects",
+    });
   }
 };
 
 // Update project
 export const updateProject = async (req, res) => {
   try {
-    const { name, description, status } = req.body;
-
-    const project = await Project.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        owner: req.user.id,
-      },
-      { name, description, status },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const project = await Project.findById(req.params.id);
 
     if (!project) {
       return res.status(404).json({
@@ -64,22 +68,52 @@ export const updateProject = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      message: "Project updated successfully",
-      project,
-    });
+    if (!canManage(project, req.user)) {
+      return res.status(403).json({
+        message: "You cannot edit this project",
+      });
+    }
+
+    const { name, description, status } = req.body;
+
+    if (name !== undefined) {
+      if (!name.trim()) {
+        return res.status(400).json({
+          message: "Project name cannot be empty",
+        });
+      }
+
+      project.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      project.description = description;
+    }
+
+    if (status !== undefined) {
+      project.status = status;
+    }
+
+    // Ownership cannot be changed through this endpoint.
+    await project.save();
+
+    const updatedProject = await Project.findById(project._id)
+      .populate("owner", "name email");
+
+    return res.status(200).json(updatedProject);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Update project error:", error);
+
+    return res.status(400).json({
+      message: error.message,
+    });
   }
 };
 
 // Delete project
 export const deleteProject = async (req, res) => {
   try {
-    const project = await Project.findOneAndDelete({
-      _id: req.params.id,
-      owner: req.user.id,
-    });
+    const project = await Project.findById(req.params.id);
 
     if (!project) {
       return res.status(404).json({
@@ -87,10 +121,26 @@ export const deleteProject = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      message: "Project deleted successfully",
+    if (!canManage(project, req.user)) {
+      return res.status(403).json({
+        message: "You cannot delete this project",
+      });
+    }
+
+    // Remove associated tasks as well.
+    const { default: Task } = await import("../model/Task.js");
+
+    await Task.deleteMany({ project: project._id });
+    await project.deleteOne();
+
+    return res.status(200).json({
+      message: "Project and its tasks deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Delete project error:", error);
+
+    return res.status(500).json({
+      message: "Failed to delete project",
+    });
   }
 };

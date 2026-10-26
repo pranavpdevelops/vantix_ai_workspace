@@ -14,40 +14,26 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const token = localStorage.getItem("taskforge_token");
+    const token = localStorage.getItem("token");
 
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-      try {
-        const res = await api.get("/auth/me");
+    api
+      .get("/auth/me")
+      .then((res) => {
         setUser(res.data.user);
-      } catch {
-        localStorage.removeItem("taskforge_token");
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
         setUser(null);
-      } finally {
+      })
+      .finally(() => {
         setLoading(false);
-      }
-    };
-
-    checkUser();
+      });
   }, []);
-
-  const register = async (name, email, password) => {
-    const res = await api.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
-
-    localStorage.setItem("taskforge_token", res.data.token);
-    setUser(res.data.user);
-
-    return res.data;
-  };
 
   const login = async (email, password) => {
     const res = await api.post("/auth/login", {
@@ -55,20 +41,26 @@ export function AuthProvider({ children }) {
       password,
     });
 
-    localStorage.setItem("taskforge_token", res.data.token);
+    localStorage.setItem("token", res.data.token);
     setUser(res.data.user);
 
     return res.data;
   };
 
   const logout = () => {
-    localStorage.removeItem("taskforge_token");
+    localStorage.removeItem("token");
     setUser(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, register, login, logout }}
+      value={{
+        user,
+        setUser,
+        login,
+        logout,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,42 +1,57 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  Circle,
+  Clock,
+  CheckCircle2,
+  CalendarDays,
+  RefreshCw,
+} from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/authcontext";
 
 const columns = [
   {
     title: "To Do",
-    color: "bg-amber-100 text-amber-700",
-    dot: "bg-amber-500",
+    color: "text-gray-600",
+    bg: "bg-gray-100",
+    icon: Circle,
   },
   {
     title: "In Progress",
-    color: "bg-blue-100 text-blue-700",
-    dot: "bg-blue-500",
+    color: "text-blue-600",
+    bg: "bg-blue-100",
+    icon: Clock,
   },
   {
     title: "Completed",
-    color: "bg-emerald-100 text-emerald-700",
-    dot: "bg-emerald-500",
+    color: "text-green-600",
+    bg: "bg-green-100",
+    icon: CheckCircle2,
   },
 ];
 
 function Kanban() {
+  const { user } = useAuth();
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [movingId, setMovingId] = useState(null);
 
-  const navigate = useNavigate();
-
-  
   const fetchTasks = async () => {
     try {
-      setLoading(true);
       setError("");
 
-      const res = await api.get("/tasks");
-      setTasks(Array.isArray(res.data) ? res.data : []);
+      const response = await api.get("/tasks");
+
+      const data = response.data;
+
+      setTasks(
+        Array.isArray(data)
+          ? data
+          : data.tasks || []
+      );
     } catch (err) {
+      console.error("Failed to fetch tasks:", err);
       setError(
         err.response?.data?.message || "Failed to load tasks."
       );
@@ -49,271 +64,273 @@ function Kanban() {
     fetchTasks();
   }, []);
 
-  const moveTask = async (task, newStatus) => {
-    if (task.status === newStatus || movingId) return;
+  const getTaskOwnerId = (task) => {
+    const owner =
+      task.owner || task.createdBy || task.user || task.assignedTo;
 
-    const oldStatus = task.status;
+    if (typeof owner === "string") {
+      return owner;
+    }
+
+    return owner?._id || owner?.id || "";
+  };
+
+  const getTaskOwnerName = (task) => {
+    const owner =
+      task.owner || task.createdBy || task.user || task.assignedTo;
+
+    if (typeof owner === "object" && owner !== null) {
+      return owner.name || owner.email || "Unknown user";
+    }
+
+    return "Task owner";
+  };
+
+  const canUpdateTask = (task) => {
+    if (!user) return false;
+
+    if (user.role === "admin") return true;
+
+    const ownerId = getTaskOwnerId(task);
+
+    return ownerId && ownerId === (user._id || user.id);
+  };
+
+  const updateTaskStatus = async (task, newStatus) => {
+    if (!canUpdateTask(task)) {
+      return;
+    }
 
     try {
-      setError("");
-      setMovingId(task._id);
+      await api.put(`/tasks/${task._id}`, {
+        status: newStatus,
+      });
 
-    
-      setTasks((prev) =>
-        prev.map((item) =>
+      setTasks((previousTasks) =>
+        previousTasks.map((item) =>
           item._id === task._id
             ? { ...item, status: newStatus }
             : item
         )
       );
-
-      await api.put(`/tasks/${task._id}`, {
-        title: task.title,
-        description: task.description || "",
-        status: newStatus,
-        priority: task.priority || "Medium",
-        dueDate: task.dueDate || null,
-      });
     } catch (err) {
-      // Restore the previous status if the request fails
-      setTasks((prev) =>
-        prev.map((item) =>
-          item._id === task._id
-            ? { ...item, status: oldStatus }
-            : item
-        )
-      );
+      console.error("Failed to update task:", err);
 
-      setError(
-        err.response?.data?.message || "Failed to update task status."
+      alert(
+        err.response?.data?.message ||
+          "Unable to update task status. Check your backend."
       );
-    } finally {
-      setMovingId(null);
     }
   };
 
- 
-  const handleDragStart = (e, task) => {
-    e.dataTransfer.setData("taskId", task._id);
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDrop = (e, status) => {
-    e.preventDefault();
-
-    const taskId = e.dataTransfer.getData("taskId");
-    const task = tasks.find((item) => item._id === taskId);
-
-    if (task) {
-      moveTask(task, status);
+  const getProjectName = (task) => {
+    if (typeof task.project === "object" && task.project !== null) {
+      return task.project.name || task.project.title || "Project";
     }
+
+    return "Project";
   };
 
   const getPriorityStyle = (priority) => {
-    if (priority === "High") {
-      return "bg-red-50 text-red-600";
-    }
+    switch ((priority || "Medium").toLowerCase()) {
+      case "high":
+        return "bg-red-50 text-red-600";
 
-    if (priority === "Low") {
-      return "bg-slate-100 text-slate-600";
-    }
+      case "low":
+        return "bg-green-50 text-green-600";
 
-    return "bg-violet-50 text-violet-700";
+      default:
+        return "bg-amber-50 text-amber-600";
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-64 items-center justify-center">
+        <RefreshCw className="animate-spin text-violet-600" size={28} />
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#F7F8FC] px-4 py-8 text-[#17172B] sm:px-8">
-      <div className="mx-auto max-w-7xl">
+    <div className="space-y-7">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-medium text-violet-600">
+            Workspace / Kanban
+          </p>
 
-        
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-[#6D5DFB]">
-              Workspace
-            </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+            Kanban Board
+          </h1>
 
-            <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
-              Kanban Board
-            </h1>
-
-            <p className="mt-2 text-sm text-[#77788D]">
-              Drag and drop tasks to update their progress.
-            </p>
-          </div>
-
-          <button
-            onClick={() => navigate("/tasks")}
-            className="w-fit rounded-xl bg-[#6D5DFB] px-5 py-3 font-semibold text-white transition hover:bg-[#5948E8]"
-          >
-            + Manage Tasks
-          </button>
+          <p className="mt-2 text-sm text-gray-500">
+            Track tasks and monitor progress across your workspace.
+          </p>
         </div>
 
-      
-        {error && (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-            <span>{error}</span>
+        <button
+          onClick={fetchTasks}
+          className="flex items-center justify-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+        >
+          <RefreshCw size={16} />
+          Refresh
+        </button>
+      </div>
 
-            <button
-              onClick={fetchTasks}
-              className="font-semibold underline"
+      {/* Error */}
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* Summary */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {columns.map((column) => {
+          const count = tasks.filter(
+            (task) => task.status === column.title
+          ).length;
+
+          const Icon = column.icon;
+
+          return (
+            <div
+              key={column.title}
+              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
             >
-              Retry
-            </button>
-          </div>
-        )}
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {columns.map((column) => {
-            const count = tasks.filter(
-              (task) => task.status === column.title
-            ).length;
-
-            return (
-              <div
-                key={column.title}
-                className="rounded-2xl border border-[#E9EAF2] bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[#77788D]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">
                     {column.title}
-                  </span>
+                  </p>
 
-                  <span
-                    className={`rounded-lg px-3 py-1 text-sm font-bold ${column.color}`}
-                  >
+                  <h2 className="mt-2 text-3xl font-bold text-gray-900">
                     {count}
-                  </span>
+                  </h2>
                 </div>
 
-                <p className="mt-3 text-2xl font-bold">
-                  {count}{" "}
-                  <span className="text-sm font-normal text-[#77788D]">
-                    {count === 1 ? "task" : "tasks"}
-                  </span>
-                </p>
+                <div className={`rounded-xl p-3 ${column.bg} ${column.color}`}>
+                  <Icon size={22} />
+                </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+      </div>
 
-        
-        {loading ? (
-          <div className="mt-8 rounded-2xl border border-[#E9EAF2] bg-white p-10 text-center text-[#77788D]">
-            Loading your board...
-          </div>
-        ) : (
-          <div className="mt-8 grid items-start gap-5 lg:grid-cols-3">
-            {columns.map((column) => {
-              const columnTasks = tasks.filter(
-                (task) => task.status === column.title
-              );
+      {/* Kanban columns */}
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+        {columns.map((column) => {
+          const Icon = column.icon;
 
-              return (
-                <section
-                  key={column.title}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                  }}
-                  onDrop={(e) => handleDrop(e, column.title)}
-                  className="min-h-96 rounded-2xl border border-[#E9EAF2] bg-[#F0F1F7] p-3 sm:p-4"
-                >
-                  {/* Column Header */}
-                  <div className="mb-4 flex items-center justify-between px-1 py-2">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`h-2.5 w-2.5 rounded-full ${column.dot}`}
-                      />
+          const columnTasks = tasks.filter(
+            (task) => task.status === column.title
+          );
 
-                      <h2 className="font-bold">{column.title}</h2>
-                    </div>
-
-                    <span className="flex h-7 min-w-7 items-center justify-center rounded-lg bg-white px-2 text-sm font-semibold text-[#77788D]">
-                      {columnTasks.length}
-                    </span>
+          return (
+            <div
+              key={column.title}
+              className="min-w-0 rounded-2xl border border-gray-200 bg-gray-50/80 p-4"
+            >
+              {/* Column header */}
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`rounded-lg p-2 ${column.bg} ${column.color}`}>
+                    <Icon size={17} />
                   </div>
 
-                  
-                  {columnTasks.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-[#D4D5E2] bg-white/60 px-4 py-10 text-center">
-                      <p className="text-sm text-[#9999AA]">
-                        No tasks here
+                  <h2 className="font-semibold text-gray-800">
+                    {column.title}
+                  </h2>
+                </div>
+
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-600 ring-1 ring-gray-200">
+                  {columnTasks.length}
+                </span>
+              </div>
+
+              {/* Task cards */}
+              <div className="space-y-3">
+                {columnTasks.map((task) => {
+                  const editable = canUpdateTask(task);
+
+                  return (
+                    <div
+                      key={task._id}
+                      className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-violet-200 hover:shadow-md"
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <h3 className="font-semibold leading-5 text-gray-900">
+                          {task.title}
+                        </h3>
+
+                        <span
+                          className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium ${getPriorityStyle(
+                            task.priority
+                          )}`}
+                        >
+                          {task.priority || "Medium"}
+                        </span>
+                      </div>
+
+                      <p className="mb-4 line-clamp-3 text-sm leading-6 text-gray-500">
+                        {task.description || "No description provided."}
                       </p>
 
-                      <p className="mt-1 text-xs text-[#AAAA BA]">
-                        Drag a task into this column
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Task Cards */}
-                  <div className="space-y-3">
-                    {columnTasks.map((task) => (
-                      <article
-                        key={task._id}
-                        draggable={movingId !== task._id}
-                        onDragStart={(e) => handleDragStart(e, task)}
-                        className={`rounded-xl border border-[#E9EAF2] bg-white p-4 shadow-sm transition hover:border-[#D4CEFF] hover:shadow-md ${
-                          movingId === task._id
-                            ? "cursor-wait opacity-50"
-                            : "cursor-grab active:cursor-grabbing"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="break-words font-bold text-[#22223A]">
-                            {task.title}
-                          </h3>
-
-                          <span className="shrink-0 text-xs text-[#AAAAAA]">
-                            ⠿
-                          </span>
-                        </div>
-
-                        <p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-5 text-[#77788D]">
-                          {task.description || "No description provided."}
+                      {/* Project */}
+                      <div className="mb-3 rounded-lg bg-gray-50 px-3 py-2">
+                        <p className="text-xs text-gray-400">
+                          Project
                         </p>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getPriorityStyle(
-                              task.priority
-                            )}`}
-                          >
-                            {task.priority || "Medium"} Priority
-                          </span>
+                        <p className="mt-1 truncate text-sm font-medium text-gray-700">
+                          {getProjectName(task)}
+                        </p>
+                      </div>
+
+                      {/* Owner */}
+                      <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
+                          {getTaskOwnerName(task)
+                            .charAt(0)
+                            .toUpperCase()}
                         </div>
 
-                        <div className="mt-4 border-t border-[#F0F0F6] pt-3">
-                          <p className="truncate text-xs text-[#77788D]">
-                            Project:{" "}
-                            <span className="font-semibold text-[#55556B]">
-                              {task.project?.name || "Project"}
-                            </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-gray-700">
+                            {getTaskOwnerName(task)}
                           </p>
 
-                          {task.dueDate && (
-                            <p className="mt-2 text-xs text-[#77788D]">
-                              Due:{" "}
-                              {new Date(
-                                task.dueDate
-                              ).toLocaleDateString()}
-                            </p>
-                          )}
+                          <p className="text-xs text-gray-400">
+                            Task owner
+                          </p>
                         </div>
+                      </div>
 
-                        
+                      {/* Due date */}
+                      {task.dueDate && (
+                        <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                          <CalendarDays size={14} />
+
+                          {new Date(task.dueDate).toLocaleDateString()}
+                        </div>
+                      )}
+
+                      {/* Status update */}
+                      {editable ? (
                         <div className="mt-4">
-                          <label className="mb-1 block text-xs font-medium text-[#77788D]">
-                            Move to
+                          <label className="mb-1.5 block text-xs font-medium text-gray-500">
+                            Update status
                           </label>
 
                           <select
-                            value={task.status}
-                            disabled={movingId === task._id}
-                            onChange={(e) =>
-                              moveTask(task, e.target.value)
+                            value={task.status || "To Do"}
+                            onChange={(event) =>
+                              updateTaskStatus(task, event.target.value)
                             }
-                            className="w-full rounded-lg border border-[#E3E4EF] bg-[#FCFCFE] px-3 py-2 text-sm outline-none focus:border-[#6D5DFB] disabled:opacity-50"
+                            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
                           >
                             {columns.map((item) => (
                               <option
@@ -325,33 +342,37 @@ function Kanban() {
                             ))}
                           </select>
                         </div>
-                      </article>
-                    ))}
+                      ) : (
+                        <p className="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-center text-xs text-gray-500">
+                          View only
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {columnTasks.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center">
+                    <Icon
+                      size={25}
+                      className="mx-auto text-gray-300"
+                    />
+
+                    <p className="mt-3 text-sm font-medium text-gray-500">
+                      No tasks here
+                    </p>
+
+                    <p className="mt-1 text-xs text-gray-400">
+                      Tasks will appear in this column.
+                    </p>
                   </div>
-                </section>
-              );
-            })}
-          </div>
-        )}
-
-        {!loading && tasks.length === 0 && !error && (
-          <div className="mt-6 rounded-2xl border border-dashed border-[#DADBE9] bg-white p-8 text-center">
-            <h3 className="text-lg font-bold">No tasks available</h3>
-
-            <p className="mt-2 text-sm text-[#77788D]">
-              Create a task first to see it on your Kanban board.
-            </p>
-
-            <button
-              onClick={() => navigate("/tasks")}
-              className="mt-5 rounded-xl bg-[#6D5DFB] px-5 py-3 font-semibold text-white hover:bg-[#5948E8]"
-            >
-              Create Your First Task
-            </button>
-          </div>
-        )}
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </main>
+    </div>
   );
 }
 

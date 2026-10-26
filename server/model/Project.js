@@ -13,15 +13,15 @@ const projectSchema = new mongoose.Schema(
       default: "",
     },
 
-  status: {
-  type: String,
-  enum: ["Planning", "In Progress", "Completed"],
-  default: "Planning",
-},
-
-    dueDate: {
-      type: Date,
-      default: null,
+    status: {
+      type: String,
+      enum: [
+        "Planning",
+        "In Progress",
+        "Completed",
+        "On Hold",
+      ],
+      default: "Planning",
     },
 
     owner: {
@@ -30,9 +30,7 @@ const projectSchema = new mongoose.Schema(
       required: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Project = mongoose.model("Project", projectSchema);

@@ -7,6 +7,7 @@ import { get } from "mongoose";
 import router from "./routes/projectroutes.js";
 import taskroutes from "./routes/taskroutes.js"
 import ai from "./routes/airoutes.js"
+import adminroute from "./routes/adminroutes.js"
 
 const app = express();
 app.use(
@@ -25,6 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/projects",router);
 app.use("/api/tasks",taskroutes)
 app.use("/api/ai",ai)
+app.use("/api/admin",adminroute);
 
 const PORT = process.env.PORT || 5000;
 
