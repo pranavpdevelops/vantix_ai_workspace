@@ -28,7 +28,7 @@ function AI() {
 
     if (!userMessage || loading) return;
 
-    // Only add a new message if this isn't a retry.
+
     const isRetry = userMessage === failedMessage;
 
     let updatedMessages;
@@ -315,5 +315,6 @@ function AI() {
     </div>
   );
 }
+
 
 export default AI;

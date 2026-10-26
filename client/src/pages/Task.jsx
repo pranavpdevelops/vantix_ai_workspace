@@ -211,7 +211,7 @@ function Tasks() {
               <input
                 className="w-full rounded-xl border border-[#E3E4EF] bg-[#FCFCFE] px-4 py-3 outline-none focus:border-[#6D5DFB] focus:ring-4 focus:ring-[#6D5DFB]/10"
                 name="title"
-                placeholder="e.g. Build login page"
+                placeholder="Enter Task"
                 value={form.title}
                 onChange={handleChange}
                 required
