@@ -64,7 +64,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Home redirect */}
+    
       <Route
         path="/"
         element={
@@ -75,7 +75,6 @@ function AppRoutes() {
         }
       />
 
-      {/* Public routes */}
       <Route
         path="/login"
         element={
@@ -90,7 +89,6 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -103,12 +101,9 @@ function AppRoutes() {
 
           <Route path="/ai" element={<Ai />} />
 
-          {/* Admin route */}
           <Route path="/admin" element={<AdminRoute />} />
         </Route>
       </Route>
-
-      {/* Unknown routes */}
       <Route
         path="*"
         element={<Navigate to="/" replace />}
@@ -116,8 +111,6 @@ function AppRoutes() {
     </Routes>
   );
 }
-
-// Main application
 export default function App() {
   return (
     <AuthProvider>

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
+
 import api from "../api";
 
 function Admin() {
@@ -20,26 +21,17 @@ function Admin() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("users");
 
+  // Fetch dashboard data
   const fetchData = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const [usersResponse, projectsResponse, tasksResponse] =
-        await Promise.all([
-          api.get("/users"),
-          api.get("/projects"),
-          api.get("/tasks"),
-        ]);
+      const { data } = await api.get("/admin/dashboard");
 
-      const getArray = (data, key) => {
-        if (Array.isArray(data)) return data;
-        return data[key] || [];
-      };
-
-      setUsers(getArray(usersResponse.data, "users"));
-      setProjects(getArray(projectsResponse.data, "projects"));
-      setTasks(getArray(tasksResponse.data, "tasks"));
+      setUsers(Array.isArray(data.users) ? data.users : []);
+      setProjects(Array.isArray(data.projects) ? data.projects : []);
+      setTasks(Array.isArray(data.tasks) ? data.tasks : []);
     } catch (err) {
       console.error("Admin dashboard error:", err);
 
@@ -56,6 +48,7 @@ function Admin() {
     fetchData();
   }, []);
 
+  // Get owner name
   const getOwner = (item) => {
     const owner =
       item.owner ||
@@ -70,6 +63,32 @@ function Admin() {
     return "Unknown";
   };
 
+  // Delete user
+  const deleteUser = async (user) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete user "${user.name || user.email}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/admin/users/${user._id}`);
+
+      setUsers((previous) =>
+        previous.filter((item) => item._id !== user._id)
+      );
+
+      alert("User deleted successfully.");
+    } catch (err) {
+      console.error("Delete user error:", err);
+
+      alert(
+        err.response?.data?.message || "Failed to delete user."
+      );
+    }
+  };
+
+  // Delete project
   const deleteProject = async (project) => {
     const confirmed = window.confirm(
       `Delete project "${project.name || project.title}"?`
@@ -83,13 +102,18 @@ function Admin() {
       setProjects((previous) =>
         previous.filter((item) => item._id !== project._id)
       );
+
+      alert("Project deleted successfully.");
     } catch (err) {
+      console.error("Delete project error:", err);
+
       alert(
         err.response?.data?.message || "Failed to delete project."
       );
     }
   };
 
+  // Delete task
   const deleteTask = async (task) => {
     const confirmed = window.confirm(
       `Delete task "${task.title}"?`
@@ -103,13 +127,18 @@ function Admin() {
       setTasks((previous) =>
         previous.filter((item) => item._id !== task._id)
       );
+
+      alert("Task deleted successfully.");
     } catch (err) {
+      console.error("Delete task error:", err);
+
       alert(
         err.response?.data?.message || "Failed to delete task."
       );
     }
   };
 
+  // Dashboard statistics
   const statCards = [
     {
       title: "Total Users",
@@ -131,12 +160,14 @@ function Admin() {
     },
   ];
 
+  // Tabs
   const tabs = [
     { id: "users", label: "Users", count: users.length },
     { id: "projects", label: "Projects", count: projects.length },
     { id: "tasks", label: "Tasks", count: tasks.length },
   ];
 
+  // Loading screen
   if (loading) {
     return (
       <div className="flex min-h-64 items-center justify-center">
@@ -150,7 +181,7 @@ function Admin() {
 
   return (
     <div className="space-y-7">
-    
+      {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-violet-600">
@@ -176,18 +207,29 @@ function Admin() {
         </button>
       </div>
 
-      {/* Error */}
+      {/* Error message */}
       {error && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <AlertCircle size={19} className="mt-0.5 shrink-0" />
+
           <div>
-            <p className="font-semibold">Unable to load all dashboard data</p>
+            <p className="font-semibold">
+              Unable to load all dashboard data
+            </p>
+
             <p className="mt-1">{error}</p>
+
+            <button
+              onClick={fetchData}
+              className="mt-3 rounded-lg bg-amber-100 px-3 py-2 font-medium hover:bg-amber-200"
+            >
+              Try again
+            </button>
           </div>
         </div>
       )}
 
-
+      {/* Statistics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {statCards.map((card) => {
           const Icon = card.icon;
@@ -217,7 +259,7 @@ function Admin() {
         })}
       </div>
 
-      
+      {/* Dashboard tables */}
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 border-b border-gray-100 p-4">
@@ -246,22 +288,27 @@ function Admin() {
           ))}
         </div>
 
-        
+        {/* USERS TABLE */}
         {activeTab === "users" && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
+            <table className="w-full min-w-[850px] text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                 <tr>
                   <th className="px-5 py-4 font-semibold">User</th>
                   <th className="px-5 py-4 font-semibold">Email</th>
                   <th className="px-5 py-4 font-semibold">Role</th>
                   <th className="px-5 py-4 font-semibold">Account ID</th>
+                  <th className="px-5 py-4 font-semibold">Action</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-gray-100">
                 {users.map((item) => (
-                  <tr key={item._id} className="hover:bg-gray-50">
+                  <tr
+                    key={item._id}
+                    className="transition hover:bg-gray-50"
+                  >
+                    {/* User */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 font-semibold text-violet-700">
@@ -276,10 +323,12 @@ function Admin() {
                       </div>
                     </td>
 
+                    {/* Email */}
                     <td className="px-5 py-4 text-gray-600">
                       {item.email}
                     </td>
 
+                    {/* Role */}
                     <td className="px-5 py-4">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -292,8 +341,20 @@ function Admin() {
                       </span>
                     </td>
 
+                    {/* Account ID */}
                     <td className="px-5 py-4 font-mono text-xs text-gray-500">
                       {item._id}
+                    </td>
+
+                    {/* Delete user */}
+                    <td className="px-5 py-4">
+                      <button
+                        onClick={() => deleteUser(item)}
+                        className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-100"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -301,7 +362,7 @@ function Admin() {
                 {users.length === 0 && (
                   <tr>
                     <td
-                      colSpan="4"
+                      colSpan="5"
                       className="px-5 py-12 text-center text-gray-500"
                     >
                       No users found.
@@ -313,7 +374,7 @@ function Admin() {
           </div>
         )}
 
-        
+        {/* PROJECTS TABLE */}
         {activeTab === "projects" && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-sm">
@@ -328,10 +389,15 @@ function Admin() {
 
               <tbody className="divide-y divide-gray-100">
                 {projects.map((project) => (
-                  <tr key={project._id} className="hover:bg-gray-50">
+                  <tr
+                    key={project._id}
+                    className="transition hover:bg-gray-50"
+                  >
                     <td className="px-5 py-4">
                       <p className="font-semibold text-gray-900">
-                        {project.name || project.title || "Untitled project"}
+                        {project.name ||
+                          project.title ||
+                          "Untitled project"}
                       </p>
 
                       <p className="mt-1 max-w-xs truncate text-xs text-gray-500">
@@ -376,7 +442,7 @@ function Admin() {
           </div>
         )}
 
-        {/* Tasks */}
+        {/* TASKS TABLE */}
         {activeTab === "tasks" && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-sm">
@@ -392,7 +458,10 @@ function Admin() {
 
               <tbody className="divide-y divide-gray-100">
                 {tasks.map((task) => (
-                  <tr key={task._id} className="hover:bg-gray-50">
+                  <tr
+                    key={task._id}
+                    className="transition hover:bg-gray-50"
+                  >
                     <td className="px-5 py-4">
                       <p className="font-semibold text-gray-900">
                         {task.title || "Untitled task"}

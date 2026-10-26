@@ -8,8 +8,6 @@ const canManage = (project, user) => {
     project.owner.toString() === user._id.toString()
   );
 };
-
-// Create project
 export const createProject = async (req, res) => {
   try {
     const { name, description, status } = req.body;
@@ -40,7 +38,6 @@ export const createProject = async (req, res) => {
   }
 };
 
-// Get ALL projects
 export const getProjects = async (req, res) => {
   try {
     const projects = await Project.find()
@@ -94,7 +91,6 @@ export const updateProject = async (req, res) => {
       project.status = status;
     }
 
-    // Ownership cannot be changed through this endpoint.
     await project.save();
 
     const updatedProject = await Project.findById(project._id)
@@ -110,7 +106,6 @@ export const updateProject = async (req, res) => {
   }
 };
 
-// Delete project
 export const deleteProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
@@ -126,8 +121,6 @@ export const deleteProject = async (req, res) => {
         message: "You cannot delete this project",
       });
     }
-
-    // Remove associated tasks as well.
     const { default: Task } = await import("../model/Task.js");
 
     await Task.deleteMany({ project: project._id });
