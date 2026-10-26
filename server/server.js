@@ -13,10 +13,13 @@ import communityRoutes from "./routes/communityroutes.js";
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://vantix-ai-workspace.vercel.app",
+    ],
+    credentials: true,
   })
-);
-app.use(express.json());
+);use(express.json());
 
 
 app.get("/", (req, res) => {
