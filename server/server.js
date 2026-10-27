@@ -3,7 +3,6 @@ import express from "express";
 import cors from "cors";
 import{ connectDB} from "./config/db.js";
 import authRoutes from "./routes/authroutes.js";
-import { get } from "mongoose";
 import router from "./routes/projectroutes.js";
 import taskroutes from "./routes/taskroutes.js"
 import ai from "./routes/airoutes.js"
@@ -19,7 +18,8 @@ app.use(
     ],
     credentials: true,
   })
-);use(express.json());
+);
+app.use(express.json());
 
 
 app.get("/", (req, res) => {

@@ -43,7 +43,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-violet-50 via-white to-indigo-50 px-4">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl md:grid-cols-2">
-        {/* Left section */}
+        
         <div className="hidden flex-col justify-between bg-gradient-to-br from-violet-700 to-indigo-600 p-10 text-white md:flex">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-white/15 p-3">
@@ -71,7 +71,6 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Login form */}
         <div className="p-6 sm:p-10 md:p-12">
           <div className="mb-8">
             <div className="mb-5 inline-flex rounded-xl bg-violet-100 p-3 text-violet-700 md:hidden">
